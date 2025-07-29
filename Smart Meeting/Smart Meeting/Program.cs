@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using Smart_Meeting.Data;
+
 namespace Smart_Meeting
 {
     public class Program
@@ -10,9 +13,13 @@ namespace Smart_Meeting
             // Add services to the container.
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddDbContext<AppDBContext>(options =>
+              {options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")); 
+             }); //registers our custom DBContextand specifies the we are using sqlserver
+                 //as db provider using the connection string retrieved from appsettings.json file
 
             var app = builder.Build();
 
