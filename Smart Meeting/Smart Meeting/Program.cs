@@ -1,43 +1,65 @@
-
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Smart_Meeting.Data;
+using SmartMeeting.Models;
+using SmartMeeting.Data;
 
-namespace Smart_Meeting
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {
-    public class Program
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<AppDbContext>();
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+           
+var app = builder.Build();
+
+// Middleware
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
+
+// Create Roles
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roles = { "Admin", "Employee", "Guest" };
+
+    foreach (var role in roles)
     {
-        public static void Main(string[] args)
+        if (!await roleManager.RoleExistsAsync(role))
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            builder.Services.AddDbContext<AppDBContext>(options =>
-              {options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")); 
-             }); //registers our custom DBContextand specifies the we are using sqlserver
-                 //as db provider using the connection string retrieved from appsettings.json file
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+            await roleManager.CreateAsync(new IdentityRole(role));
         }
     }
 }
+
+app.Run();
