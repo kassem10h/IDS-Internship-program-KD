@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Meeting.Data;
 using Smart_Meeting.Models;
-using SmartMeeting.Data;
 using System;
 
 namespace Smart_Meeting.Controllers

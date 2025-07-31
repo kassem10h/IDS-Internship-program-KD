@@ -19,7 +19,7 @@ namespace Smart_Meeting
 
 
 
-            builder.Services.AddDbContext<AppDBContext>(options =>
+            builder.Services.AddDBContext<AppDBContext>(options =>
               options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
 
 

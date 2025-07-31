@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Smart_Meeting.Models;
 
-namespace SmartMeeting.Data
+namespace Smart_Meeting.Data
 {
     public class AppDBContext : IdentityDbContext<IdentityUser>
     {
