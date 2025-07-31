@@ -7,7 +7,7 @@ namespace Smart_Meeting.Data
 {
     public class AppDBContext : IdentityDbContext<IdentityUser>
     {
-        public AppDBContext(DbContextOptions<AppDbContext> options)
+        public AppDBContext(DbContextOptions<AppDBContext> options)
             : base(options)
         {
         }
