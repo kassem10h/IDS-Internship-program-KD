@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Smart_Meeting.Models;
 using Smart_Meeting.Data;
+using System;
 
 namespace Smart_Meeting
 {
@@ -19,8 +20,9 @@ namespace Smart_Meeting
 
 
 
-            builder.Services.AddDBContext<AppDBContext>(options =>
-              options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
+            builder.Services.AddDbContext<AppDBContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
+
 
 
 
