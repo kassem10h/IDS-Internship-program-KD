@@ -22,8 +22,13 @@ namespace Smart_Meeting
 
             builder.Services.AddDbContext<AppDBContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
-
-
+                
+            builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+             {
+                 options.SignIn.RequireConfirmedAccount = false;
+             })
+                 .AddRoles<IdentityRole>()
+                 .AddEntityFrameworkStores<AppDBContext>();
 
 
             var app = builder.Build();
