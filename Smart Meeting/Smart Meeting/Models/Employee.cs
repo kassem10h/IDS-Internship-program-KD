@@ -9,16 +9,18 @@ namespace
         [Key]
         public int EmployeeId { get; set; }
 
-        [Column(TypeName = "nvarchar(50)")]
-        public string Role { get; set; }
+        public string? Role { get; set; } = "Employee";
 
         [Column(TypeName = "nvarchar(50)")]
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
         [Column(TypeName = "nvarchar(50)")]
-        public string LastName { get; set; }
+        public required string LastName { get; set; }
 
         [Column(TypeName = "nvarchar(50)")]
-        public string Email { get; set; }
+        public required string Email { get; set; }
+
+        [Column(TypeName = "nvarchar(50)")]
+        public required string Password { get; set; }
     }
 }

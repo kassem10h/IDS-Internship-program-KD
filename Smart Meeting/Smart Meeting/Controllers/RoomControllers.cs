@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Smart_Meeting.Data;
+using Smart_Meeting.DTOs;
 using Smart_Meeting.Models;
 using System;
 
@@ -12,42 +14,53 @@ namespace Smart_Meeting.Controllers
     public class RoomController : ControllerBase
     {
         private readonly AppDBContext _context;
+        private readonly IMapper _mapper;
 
-        public RoomController(AppDBContext context)
+        public RoomController(AppDBContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;   
         }
 
         [HttpPost]
-        public async Task<ActionResult<Room>> AddRoom(Room room)
+        public async Task<ActionResult<RoomDto>> AddRoom(RoomDto room)
         {
-            _context.Rooms.Add(room);
+            var RoomExist = await _context.Rooms.FirstOrDefaultAsync(r => r.RoomName == room.RoomName);
+            if (RoomExist != null) return Conflict("Room already exists");
+            var NewRoom = _mapper.Map<Room>(room);
+            _context.Rooms.Add(NewRoom);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetRoom), new { id = room.ID }, room);
+            var dtoResult = _mapper.Map<RoomDto>(NewRoom);
+            return CreatedAtAction(nameof(GetRoom), new { id = NewRoom.ID }, NewRoom);
         }
 
         [HttpGet] //gets all rooms 
-        public async Task<ActionResult<IEnumerable<Room>>> GetRooms()
+        public async Task<ActionResult<IEnumerable<RoomDto>>> GetRooms()
         {
-            return await _context.Rooms.ToListAsync();
+            var rooms = await _context.Rooms.ToListAsync();
+            var dtoResult = _mapper.Map<List<RoomDto>>(rooms);
+            return Ok(dtoResult);
         }
 
         [HttpGet("{id}")] //get one room according to id in the url
-        public async Task<ActionResult<Room>> GetRoom(int id)
+        public async Task<ActionResult<RoomDto>> GetRoom(int id)
         {
             var room = await _context.Rooms.FindAsync(id);
             if (room == null) return NotFound();
-            return room;
+            var dtoResult = _mapper.Map<RoomDto>(room);
+            
+            return Ok(dtoResult);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateRoom(int id, Room room)
+        public async Task<ActionResult> UpdateRoom(int id, UpdateRoomDto room)
         {
-            if (id != room.ID) return BadRequest();
+            var roomExist = await _context.Rooms.FindAsync(id);
+            if (roomExist == null ) return BadRequest();
 
-            _context.Entry(room).State = EntityState.Modified;
+            _mapper.Map(room, roomExist);
             await _context.SaveChangesAsync();
-            return NoContent();
+            return CreatedAtAction(nameof(GetRoom), new { id = roomExist.ID }, room);
         }
 
         [HttpDelete("{id}")]

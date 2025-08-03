@@ -15,5 +15,8 @@ namespace Smart_Meeting.Models
         public int Capacity { get; set; }
         [Required]
         public bool IsAvailable { get; set; }
+
+        [Required]
+        public required RoomFeatures RoomFeatures { get; set; }
     }
 }

@@ -13,5 +13,6 @@ namespace Smart_Meeting.Data
         }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Employee> Employees { get; set; }
+        public DbSet<RoomFeatures> RoomFeatures { get; set; }
     }
 }
