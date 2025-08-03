@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Smart_Meeting.Models;
 using Smart_Meeting.Data;
 using System;
+using Smart_Meeting.DTOs;
 
 namespace Smart_Meeting
 {
@@ -17,12 +18,19 @@ namespace Smart_Meeting
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAutoMapper(typeof(Smart_Meeting.DTOs.AutoMapper));
 
 
 
             builder.Services.AddDbContext<AppDBContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
 
+            builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+            })
+                 .AddRoles<IdentityRole>()
+                 .AddEntityFrameworkStores<AppDBContext>();
 
 
 
