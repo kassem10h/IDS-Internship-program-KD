@@ -11,8 +11,47 @@ namespace Smart_Meeting.Data
             : base(options)
         {
         }
+
+        // 🔗 DbSets
         public DbSet<Room> Rooms { get; set; }
         public DbSet<Employee> Employees { get; set; }
         public DbSet<RoomFeatures> RoomFeatures { get; set; }
+        public DbSet<Meeting> Meetings { get; set; }
+        public DbSet<MinutesOfMeeting> MinutesOfMeetings { get; set; }
+        public DbSet<Attendee> Attendees { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // 🔗 Attendee: Many-to-Many between Employee and Meeting
+            modelBuilder.Entity<Attendee>()
+                .HasKey(a => new { a.EmployeeID, a.MeetingID });
+
+            modelBuilder.Entity<Attendee>()
+                .HasOne(a => a.employee)
+                .WithMany(e => e.Attendees)
+                .HasForeignKey(a => a.EmployeeID);
+
+            modelBuilder.Entity<Attendee>()
+                .HasOne(a => a.meeting)
+                .WithMany(m => m.Attendees)
+                .HasForeignKey(a => a.MeetingID)
+                .OnDelete(DeleteBehavior.Restrict); ;
+
+            // 📝 MinutesOfMeeting: Many-to-One with Employee (Author)
+            modelBuilder.Entity<MinutesOfMeeting>()
+                .HasOne(m => m.Author)
+                .WithMany(e => e.AuthoredMinutes)
+                .HasForeignKey(m => m.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 📝 MinutesOfMeeting: One-to-One with Meeting
+            modelBuilder.Entity<MinutesOfMeeting>()
+                .HasOne(m => m.Meeting)
+                .WithOne(meeting => meeting.MinutesOfMeeting)
+                .HasForeignKey<MinutesOfMeeting>(m => m.MeetingID);
+        }
     }
 }
