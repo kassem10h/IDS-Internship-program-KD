@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Smart_Meeting.Models;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
-namespace
-        Smart_Meeting.Models
+namespace Smart_Meeting.Models
 {
     public class Employee
     {
@@ -22,5 +22,8 @@ namespace
 
         [Column(TypeName = "nvarchar(50)")]
         public required string Password { get; set; }
+
+        public List<Attendee> Attendees { get; set; } = new();
+        public List<MinutesOfMeeting> AuthoredMinutes { get; set; } = new();
     }
 }
