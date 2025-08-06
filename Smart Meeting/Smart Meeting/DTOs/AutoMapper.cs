@@ -18,6 +18,8 @@ namespace Smart_Meeting.DTOs
             CreateMap<MinutesOfMeeting, MinutesOfMeetingDto>();
             CreateMap<Meeting, CreateMeetingDto>();
             CreateMap<Meeting, MeetingDto>();
+            CreateMap<Employee, LogInDto>();
+
 
             CreateMap<RoomFeaturesDto, RoomFeatures>();
             CreateMap<RoomDto, Room>();
@@ -28,6 +30,7 @@ namespace Smart_Meeting.DTOs
             CreateMap<MinutesOfMeetingDto ,MinutesOfMeeting>();
             CreateMap<CreateMeetingDto ,Meeting>();
             CreateMap<MeetingDto ,Meeting>();
+            CreateMap<LogInDto, Employee>();
 
 
         }
