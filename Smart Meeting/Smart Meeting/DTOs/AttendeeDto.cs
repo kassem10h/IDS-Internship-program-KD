@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 
 namespace Smart_Meeting.DTOs
 {
@@ -9,3 +9,4 @@ namespace Smart_Meeting.DTOs
        // public int MeetingID { get; set; }
     }
 }
+    

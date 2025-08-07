@@ -1,4 +1,4 @@
-﻿namespace Smart_Meeting.DTOs
+namespace Smart_Meeting.DTOs
 {
     public class RoomFeaturesDto
     {

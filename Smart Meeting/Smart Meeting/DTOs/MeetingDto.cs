@@ -1,4 +1,4 @@
-﻿using Smart_Meeting.Models;
+using Smart_Meeting.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Smart_Meeting.DTOs

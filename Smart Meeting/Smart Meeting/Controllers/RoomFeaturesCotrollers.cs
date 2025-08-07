@@ -1,9 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Smart_Meeting.Data;
+using Microsoft.EntityFrameworkCore; 
 using Smart_Meeting.DTOs;
 using Smart_Meeting.Models;
+using SmartMeeting.Data;
 
 namespace Smart_Meeting.Controllers
 {
@@ -12,10 +12,10 @@ namespace Smart_Meeting.Controllers
 
     public class RoomFeaturesCotrollers : ControllerBase
     {
-        private readonly AppDBContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public RoomFeaturesCotrollers(AppDBContext context, IMapper mapper) 
+        public RoomFeaturesCotrollers(ApplicationDbContext context, IMapper mapper) 
         {
             _context = context;
             _mapper = mapper;

@@ -1,69 +1,81 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Smart_Meeting.Data;
 using Smart_Meeting.DTOs;
 using Smart_Meeting.Models;
-using System;
+using SmartMeeting.Data;
+using SmartMeeting.DTOs;
+using SmartMeeting.Models;
 
-namespace Smart_Meeting.Controllers
+namespace SmartMeeting.Controllers
 {
     [Route("api/room")]
     [ApiController]
+    [Authorize]
     public class RoomController : ControllerBase
     {
-        private readonly AppDBContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public RoomController(AppDBContext context, IMapper mapper)
+        public RoomController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
-            _mapper = mapper;   
+            _mapper = mapper;
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<RoomDto>> AddRoom(RoomDto room)
         {
-            var RoomExist = await _context.Rooms.FirstOrDefaultAsync(r => r.RoomName == room.RoomName);
-            if (RoomExist != null) return Conflict("Room already exists");
-            var NewRoom = _mapper.Map<Room>(room);
-            _context.Rooms.Add(NewRoom);
+            var roomExist = await _context.Rooms.FirstOrDefaultAsync(r => r.RoomName == room.RoomName);
+            if (roomExist != null) return Conflict("Room already exists");
+
+            var newRoom = _mapper.Map<Room>(room);
+            _context.Rooms.Add(newRoom);
             await _context.SaveChangesAsync();
-            var dtoResult = _mapper.Map<RoomDto>(NewRoom);
-            return CreatedAtAction(nameof(GetRoom), new { id = NewRoom.ID }, NewRoom);
+
+            var dtoResult = _mapper.Map<RoomDto>(newRoom);
+            return CreatedAtAction(nameof(GetRoom), new { id = newRoom.ID }, dtoResult);
         }
 
-        [HttpGet] //gets all rooms 
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<RoomDto>>> GetRooms()
         {
-            var rooms = await _context.Rooms.ToListAsync();
+            var rooms = await _context.Rooms
+                .Include(r => r.RoomFeatures)
+                .ToListAsync();
             var dtoResult = _mapper.Map<List<RoomDto>>(rooms);
             return Ok(dtoResult);
         }
 
-        [HttpGet("{id}")] //get one room according to id in the url
+        [HttpGet("{id}")]
         public async Task<ActionResult<RoomDto>> GetRoom(int id)
         {
-            var room = await _context.Rooms.FindAsync(id);
+            var room = await _context.Rooms
+                .Include(r => r.RoomFeatures)
+                .FirstOrDefaultAsync(r => r.ID == id);
+
             if (room == null) return NotFound();
+
             var dtoResult = _mapper.Map<RoomDto>(room);
-            
             return Ok(dtoResult);
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateRoom(int id, UpdateRoomDto room)
         {
             var roomExist = await _context.Rooms.FindAsync(id);
-            if (roomExist == null ) return BadRequest();
+            if (roomExist == null) return NotFound();
 
             _mapper.Map(room, roomExist);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetRoom), new { id = roomExist.ID }, room);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteRoom(int id)
         {
             var room = await _context.Rooms.FindAsync(id);

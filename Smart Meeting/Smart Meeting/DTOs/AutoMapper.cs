@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using Microsoft.Extensions.Logging;
+using AutoMapper;
 using Smart_Meeting.Models;
+using SmartMeeting.DTOs;
 
 namespace Smart_Meeting.DTOs
 {
@@ -18,6 +18,8 @@ namespace Smart_Meeting.DTOs
             CreateMap<MinutesOfMeeting, MinutesOfMeetingDto>();
             CreateMap<Meeting, CreateMeetingDto>();
             CreateMap<Meeting, MeetingDto>();
+            CreateMap<Employee, LoginDto>();
+
 
             CreateMap<RoomFeaturesDto, RoomFeatures>();
             CreateMap<RoomDto, Room>();
@@ -28,6 +30,7 @@ namespace Smart_Meeting.DTOs
             CreateMap<MinutesOfMeetingDto ,MinutesOfMeeting>();
             CreateMap<CreateMeetingDto ,Meeting>();
             CreateMap<MeetingDto ,Meeting>();
+            CreateMap<LoginDto, Employee>();
 
 
         }

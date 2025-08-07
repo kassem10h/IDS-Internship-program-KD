@@ -1,4 +1,3 @@
-﻿
 namespace Smart_Meeting.DTOs
 {
     public class RoomDto
