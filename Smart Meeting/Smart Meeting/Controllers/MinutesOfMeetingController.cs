@@ -1,24 +1,18 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore; 
 using Smart_Meeting.DTOs;
 using Smart_Meeting.Models;
 using SmartMeeting.Data;
-using SmartMeeting.DTOs;
-using SmartMeeting.Models;
-using System.Security.Claims;
 
-namespace SmartMeeting.Controllers
+namespace Smart_Meeting.Controllers
 {
-    [Route("api/meeting/{meetingID}/minutes")]
+    [Route("api/{meetingID}/MoM")]
     [ApiController]
-    [Authorize]
     public class MinutesOfMeetingController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
-
         public MinutesOfMeetingController(ApplicationDbContext context, IMapper mapper)
         {
             _mapper = mapper;
@@ -26,77 +20,55 @@ namespace SmartMeeting.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<MinutesOfMeetingDto>> GetMinutes(int meetingID)
+        public async Task<ActionResult<IEnumerable<MinutesOfMeetingDto>>> GetMOM(int meetingID)
         {
-            var meetingExist = await _context.Meetings.FindAsync(meetingID);
-            if (meetingExist == null) return NotFound("Meeting not found");
+            var MeetingExist = await _context.Meetings.FindAsync(meetingID);
+            if (MeetingExist == null) return NotFound();
 
-            var minutesMeeting = await _context.MinutesOfMeetings
-                .Include(m => m.Author)
-                .FirstOrDefaultAsync(m => m.MeetingID == meetingID);
+            var MinsMeeting = await _context.MinutesOfMeetings
+             .FirstOrDefaultAsync(M => M.MeetingID == meetingID);
+            
 
-            if (minutesMeeting == null) return NotFound("Minutes not found");
+            var dtoResult = _mapper.Map<MinutesOfMeetingDto>(MinsMeeting);
 
-            var dtoResult = _mapper.Map<MinutesOfMeetingDto>(minutesMeeting);
             return Ok(dtoResult);
         }
 
+
         [HttpPost]
-        public async Task<ActionResult> AddMinutes(int meetingID, MinutesOfMeetingDto minMeeting)
+        public async Task<ActionResult> AddMOM(int meetingID, MinutesOfMeetingDto MinMeeting)
         {
-            var meetingExist = await _context.Meetings.FindAsync(meetingID);
-            if (meetingExist == null) return NotFound("Meeting not found");
+            var MeetingExist = await _context.Meetings.FindAsync(meetingID);
+            if (MeetingExist == null) return NotFound();
 
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+            var MinOfMeetingExist = await _context.MinutesOfMeetings
+                  .FirstOrDefaultAsync(m => m.MeetingID == meetingID);
+            if (MinOfMeetingExist != null) return Conflict("Minutes of meeting are added");
 
-            var minOfMeetingExist = await _context.MinutesOfMeetings
-                .FirstOrDefaultAsync(m => m.MeetingID == meetingID);
-
-            if (minOfMeetingExist != null)
-                return Conflict("Minutes of meeting already exist");
-
-            var newMinOfMeeting = _mapper.Map<MinutesOfMeeting>(minMeeting);
+            var newMinOfMeeting = _mapper.Map<MinutesOfMeeting>(MinMeeting);
             newMinOfMeeting.MeetingID = meetingID;
-            newMinOfMeeting.AuthorId = currentUserId; // Set current user as author
-
             _context.MinutesOfMeetings.Add(newMinOfMeeting);
             await _context.SaveChangesAsync();
-
-            return Ok("Minutes added successfully");
+            return Ok();
         }
+
 
         [HttpPut]
-        public async Task<ActionResult> UpdateMinutes(int meetingID, MinutesOfMeetingDto minMeeting)
+        public async Task<ActionResult<RoomFeaturesDto>> UpdateMOM(int meetingID, MinutesOfMeetingDto MinMeeting)
         {
-            var meetingExist = await _context.Meetings.FindAsync(meetingID);
-            if (meetingExist == null) return NotFound("Meeting not found");
+            var MeetingExist = await _context.Meetings.FindAsync(meetingID);
+            if (MeetingExist == null) return NotFound();
 
-            var minOfMeetingExist = await _context.MinutesOfMeetings
-                .FirstOrDefaultAsync(m => m.MeetingID == meetingID);
+            var MinOfMeetingExist = await _context.MinutesOfMeetings
+                 .FirstOrDefaultAsync(m => m.MeetingID == meetingID);
+            if (MinOfMeetingExist == null) return Conflict("Minutes of meeting are not added");
 
-            if (minOfMeetingExist == null)
-                return NotFound("Minutes not found");
 
-            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var isAdmin = User.IsInRole("Admin");
-
-            // Convert currentUserId to int for comparison  
-            if (!int.TryParse(currentUserId, out var currentUserIdInt))
-            {
-                return Unauthorized();
-            }
-
-            // Only author or admin can update minutes  
-            if (!isAdmin && minOfMeetingExist.AuthorId != currentUserIdInt)
-            {
-                return Forbid();
-            }
-
-            _mapper.Map(minMeeting, minOfMeetingExist);
+            _mapper.Map(MinMeeting, MinOfMeetingExist);
             await _context.SaveChangesAsync();
+            return Ok();
 
-            return Ok("Minutes updated successfully");
         }
+
     }
 }

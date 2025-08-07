@@ -36,31 +36,39 @@ namespace SmartMeeting
             {
                 options.Filters.Add<ValidationFilter>();
             });
+
             services.AddEndpointsApiExplorer();
 
+            // DbContext
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DevConnection")));
 
+            // Identity & Authorization (Make sure AddIdentityConfiguration registers Identity using ApplicationDbContext)
             services.AddIdentityConfiguration();
             services.AddAuthorizationPolicies();
 
-            var jwtSettings = new JwtSettings();
-            configuration.GetSection(JwtSettings.SectionName).Bind(jwtSettings);
+            // JWT settings binding
+            var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
 
-            if (string.IsNullOrEmpty(jwtSettings.SecretKey))
+            // Debug: print loaded JWT config (remove in production)
+            Console.WriteLine($"JWT Issuer: '{jwtSettings.Issuer}'");
+            Console.WriteLine($"JWT Audience: '{jwtSettings.Audience}'");
+            Console.WriteLine($"JWT Secret length: '{(jwtSettings.SecretKey ?? string.Empty).Length}'");
+
+            if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey))
             {
-                Console.WriteLine("WARNING: JWT SecretKey is empty or missing!");
+                // Throwing here will stop app startup so you don't proceed in broken state
+                throw new InvalidOperationException("JWT SecretKey is missing. Set 'JWT:SecretKey' in appsettings.json or env variables.");
             }
 
             services.AddSingleton(jwtSettings);
 
-            var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
+            var keyBytes = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
 
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
             .AddJwtBearer(options =>
             {
@@ -73,10 +81,11 @@ namespace SmartMeeting
                     ValidateAudience = true,
                     ValidAudience = jwtSettings.Audience,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+
                 options.Events = new JwtBearerEvents
                 {
                     OnMessageReceived = context =>
@@ -91,29 +100,27 @@ namespace SmartMeeting
                 };
             });
 
-            // **Add Swagger Security here**
+            // Swagger (with security)
             services.AddSwaggerSecurity();
 
             services.AddAutoMapper(typeof(Program));
 
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
-                });
+                options.AddPolicy("AllowAll", p => p
+                    .AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader());
             });
 
+            // DI
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<JwtTokenGenerator>();
             services.AddScoped<TokenValidationHelper>();
 
-            services.AddHealthChecks()
-                .AddDbContextCheck<ApplicationDbContext>();
+            // Health checks
+            services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>();
 
             services.AddLogging();
         }
@@ -126,18 +133,18 @@ namespace SmartMeeting
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartMeeting API V1");
-                    c.RoutePrefix = string.Empty;  // so root url shows swagger UI
+                    c.RoutePrefix = string.Empty;
                     c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
                     c.DefaultModelsExpandDepth(-1);
                 });
             }
-
             else
             {
                 app.UseExceptionHandler("/error");
                 app.UseHsts();
             }
 
+            // Error handling should be early
             app.UseMiddleware<ErrorHandlingMiddleware>();
 
             app.UseHttpsRedirection();
@@ -149,8 +156,10 @@ namespace SmartMeeting
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.MapHealthChecks("/health");
             app.MapControllers();
 
+            // Seed DB
             using (var scope = app.Services.CreateScope())
             {
                 try

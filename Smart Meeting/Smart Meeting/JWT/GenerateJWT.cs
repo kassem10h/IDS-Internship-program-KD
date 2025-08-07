@@ -1,4 +1,3 @@
-using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Smart_Meeting.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,25 +9,27 @@ namespace Smart_Meeting.JWT
     public static class GenerateJWT
     {
         public static string GenerateJwtToken(Employee emp, IConfiguration config)
-        { 
+        {
+            var secret = config["JWT:SecretKey"];
+            if (string.IsNullOrEmpty(secret))
+                throw new InvalidOperationException("JWT secret key is not configured.");
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT:SigningKey"]));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 
-            var claims = new[]
-{
-    new Claim("employee_id", emp.EmployeeId.ToString()),
+            var claims = new List<Claim>
+            {
+                new Claim("employee_id", emp.EmployeeId.ToString()),
+                new Claim(ClaimTypes.Role, emp.Role ?? "User"),
+                new Claim(ClaimTypes.NameIdentifier, emp.EmployeeId.ToString())
+            };
 
-    // Add the Role claim here
-    new Claim(ClaimTypes.Role, emp.Role)  
-};
-
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(5),
+                Expires = DateTime.UtcNow.AddMinutes(
+                    int.TryParse(config["JWT:AccessTokenExpirationMinutes"], out var m) ? m : 60),
                 Issuer = config["JWT:Issuer"],
                 Audience = config["JWT:Audience"],
                 SigningCredentials = creds,
